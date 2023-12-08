@@ -4,6 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import Campeones.Arquero;
+import Campeones.Asesino;
+import Campeones.Caballero;
+import Campeones.Campeon;
+import Campeones.Clerigo;
+import Campeones.Ingeniero;
+import Campeones.Mago;
+import Jugador.Jugador;
+import Jugador.Rodillos;
+
 public class Partida
 {
 	private List<Jugador> jugadores = new ArrayList<>();

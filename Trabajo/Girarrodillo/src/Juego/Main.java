@@ -3,6 +3,9 @@ package Juego;
 import java.util.ArrayList;
 import java.util.List;
 
+import Campeones.Campeon;
+import Jugador.Jugador;
+
 public class Main
 {
 	public static void main(String[] args)

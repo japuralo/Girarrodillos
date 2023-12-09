@@ -18,6 +18,7 @@ import Campeones.Clerigo;
 import Campeones.Ingeniero;
 import Campeones.Mago;
 import Jugador.Jugador;
+import Jugador.Rodillos;
 
 public class Cliente
 {
@@ -128,6 +129,7 @@ public class Cliente
 	
 	public void turno() throws Exception
 	{
+		jug.resetarCandados();
 		System.out.println("");
 		System.out.println("Tú turno");
 		for(int i=0;i<3;i++)
@@ -137,11 +139,29 @@ public class Cliente
 			jug.mostrar();
 		}
 		
-		cc.out.writeObject(jug);
-		//calcularTurno(jug);
-		System.out.println("");
-		jug.mostrar();
-		jug.resetarCandados();
+		calcularTurno(jug);
+	}
+	
+	public void calcularTurno(Jugador j) throws Exception
+	{
+		int[] calculo = new int[3];
+		calculo[0] = 0;
+		calculo[1] = 0;
+		calculo[2] = 0;
+		String aux = "";
+		Rodillos r = j.getRodillos();
+		aux = aux + r.getR1()+ r.getR2()+ r.getR3()+ r.getR4()+ r.getR5();
+		for(int i=0;i<aux.length();i++)
+		{
+			if(aux.charAt(i) == 'I') calculo[0]++;
+			if(aux.charAt(i) == 'D') calculo[1]++;
+			if(aux.charAt(i) == 'M') calculo[2]++;
+		}
+		calculo[0] = calculo[0] - 2;
+		calculo[1] = calculo[1] - 2;
+		calculo[2] = calculo[2] - 2;
+		Paquete cal = new Paquete(calculo[0], calculo[1], calculo[2]);
+		cc.out.writeObject(cal);
 	}
 	
 	public static void main(String[] args)
@@ -153,7 +173,7 @@ public class Cliente
 			c.elegirCampeon();
 			c.leerRival();
 			c.mostrarPartida();
-			
+			c.turno();
 			while(true)
 			{
 				

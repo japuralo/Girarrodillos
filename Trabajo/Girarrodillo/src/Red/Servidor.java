@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
+import Campeones.Campeon;
 import Jugador.Jugador;
+import Jugador.Rodillos;
 
 public class Servidor
 {
@@ -23,6 +25,8 @@ public class Servidor
 	private Jugador j1 = null;
 	private Jugador j2 = null;
 	private int jugListos = 0;
+	private int turnoAcabado = 0;
+	private int acc = 0;
 	
 	public Servidor()
 	{
@@ -65,11 +69,10 @@ public class Servidor
 	private class ConexionServidor implements Runnable
 	{
 		private Socket socket;
-		//private DataInputStream in;
-		//private DataOutputStream out;
 		private ObjectInputStream in;
 		private ObjectOutputStream out;
 		private int idJugador;
+		private Paquete cal;
 		
 		public ConexionServidor(Socket s, int id)
 		{
@@ -77,9 +80,7 @@ public class Servidor
 			this.idJugador = id;
 			try
 			{
-				//this.in = new DataInputStream(socket.getInputStream());
 				this.in = new ObjectInputStream(socket.getInputStream());
-				//this.out = new DataOutputStream(socket.getOutputStream());
 				this.out = new ObjectOutputStream(socket.getOutputStream());
 			}
 			catch(IOException e)
@@ -102,13 +103,27 @@ public class Servidor
 		
 		public void leerJugador() throws Exception
 		{
+			Jugador aux = (Jugador) in.readObject();
+			aux.toString();
 			if(idJugador == 1)
 			{
-				j1 = (Jugador) in.readObject();
+				j1 = aux;
 			}
 			else
 			{
-				j2 = (Jugador) in.readObject();
+				j2 = aux;
+			}
+		}
+		
+		public Jugador obtenerJugadorPorId()
+		{
+			if(idJugador == 1)
+			{
+				return j1;
+			}
+			else
+			{
+				return j2;
 			}
 		}
 		
@@ -123,6 +138,7 @@ public class Servidor
 				{
 					TimeUnit.SECONDS.sleep(1);
 				}
+				
 				if(idJugador == 1)
 				{
 					out.writeObject(j2);
@@ -142,11 +158,21 @@ public class Servidor
 				}
 				
 				mandarRival();
-				
+
 				while(!juegoAcabado())
 				{
-					leerJugador();
-					leerJugador();
+					turnoAcabado = 0;
+					//leerJugador();
+					cal = (Paquete) in.readObject();
+					turnoAcabado++;
+					while(turnoAcabado != 2)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+					TimeUnit.SECONDS.sleep(1);
+					
+					calcularTurno(obtenerJugadorPorId(), cal);
+					acc++;
 				}
 			}
 			catch(Exception e)
@@ -155,6 +181,68 @@ public class Servidor
 			}
 		}
 		
+	}
+	
+	public void calcularTurno(Jugador j, Paquete cal)
+	{
+		List<Campeon> cam = j.getCampeones();
+		if(cal.getC1() > 0)
+		{
+			cam.get(0).turnosAtaque = cam.get(0).turnosAtaque - cal.getC1();
+			if(cam.get(0).getTurnosAtaque() < 0) cam.get(0).setTurnosAtaque(0);
+		}
+		if(cal.getC2() > 0)
+		{
+			cam.get(1).turnosAtaque = cam.get(1).turnosAtaque - cal.getC2();
+			if(cam.get(1).getTurnosAtaque() < 0) cam.get(1).setTurnosAtaque(0);
+		}
+		if(cal.getC3() > 0 && j.getPm()<10)
+		{
+			j.setPm(j.getPm() + cal.getC3());
+			System.out.println("");
+			System.out.println(cal.getC3()+" de Muralla construida.");
+			if(j.getPm()>10) j.setPm(10);
+		}
+	}
+	
+	public void acciones()
+	{
+		System.out.println("----------------------------");
+		List<Jugador> jugadores = new ArrayList<>();
+		jugadores.add(j1);
+		jugadores.add(j2);
+		List<Campeon> campeones = new ArrayList<>();
+		jugadores.get(0).mostrar();
+		System.out.println("");
+		jugadores.get(1).mostrar();
+		for(Jugador j : jugadores)
+		{
+			for(Campeon c : j.getCampeones())
+			{
+				campeones.add(c);
+			}
+		}
+		for(Campeon c : campeones)
+		{
+			if(c.getTurnosAtaque() <= 0)
+			{
+				c.accion();
+				c.setSubidaNivel(c.getSubidaNivel() - 1);
+				if(c.getSubidaNivel() == 0)
+				{
+					System.out.println("¡"+c.getNom()+" ha mejorado!");
+					c.mejorar();
+				}
+				c.resetearTA();
+			}
+		}
+		System.out.println("");
+		jugadores.get(0).mostrar();
+		System.out.println("");
+		jugadores.get(1).mostrar();
+		System.out.println("");
+		System.out.println("----------------------------");
+		System.out.println("");
 	}
 	
 	public boolean juegoAcabado()
@@ -175,7 +263,22 @@ public class Servidor
 	
 	public static void main(String[] args)
 	{
-		Servidor serv = new Servidor();
-		serv.aceptarConexion();
+		try
+		{
+			Servidor serv = new Servidor();
+			serv.aceptarConexion();
+		
+			while(serv.acc != 2)
+			{
+				TimeUnit.SECONDS.sleep(1);
+			}
+			TimeUnit.SECONDS.sleep(1);
+
+			serv.acciones();
+		}
+		catch(Exception e)
+		{
+			
+		}
 	}
 }

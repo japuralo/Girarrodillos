@@ -1,9 +1,12 @@
 package Campeones;
 
+import java.io.Serializable;
+
 import Jugador.Jugador;
 
-public abstract class Campeon
+public abstract class Campeon implements Serializable
 {
+	private static final long serialVersionUID = 1L;
 	public int danoCorona;
 	public int danoMuralla;
 	public int turnosAtaque;

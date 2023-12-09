@@ -1,13 +1,15 @@
 package Jugador;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 import Campeones.Campeon;
 
-public class Jugador
+public class Jugador implements Serializable
 {
+	private static final long serialVersionUID = 1L;
 	private List<Campeon> campeones;
 	private Rodillos rodillos;
 	private int pc = 10;

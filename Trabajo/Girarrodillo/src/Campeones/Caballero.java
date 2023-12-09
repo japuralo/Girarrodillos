@@ -1,8 +1,10 @@
 package Campeones;
 
+import java.io.Serializable;
+
 import Jugador.Jugador;
 
-public class Caballero extends Campeon
+public class Caballero extends Campeon implements Serializable
 {
 	private String nom = "CAB";
 	

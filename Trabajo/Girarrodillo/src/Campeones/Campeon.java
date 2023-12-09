@@ -64,6 +64,16 @@ public abstract class Campeon implements Serializable
 	{
 		this.jugador = jugador;
 	}
+	
+	public Jugador getRival()
+	{
+		return this.rival;
+	}
+
+	public void setRival(Jugador jugador)
+	{
+		this.rival = jugador;
+	}
 
 	public int getSubidaNivel()
 	{

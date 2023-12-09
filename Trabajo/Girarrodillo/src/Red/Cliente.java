@@ -44,8 +44,6 @@ public class Cliente
 	private class ConexionCliente
 	{
 		private Socket socket;
-		//private DataInputStream in;
-		//private DataOutputStream out;
 		private ObjectInputStream in;
 		private ObjectOutputStream out;
 		
@@ -54,10 +52,8 @@ public class Cliente
 			try
 			{
 				this.socket = new Socket("localhost",9876);
-				//this.in = new DataInputStream(socket.getInputStream());
 				this.out = new ObjectOutputStream(socket.getOutputStream());
 				this.in = new ObjectInputStream(socket.getInputStream());
-				//this.out = new DataOutputStream(socket.getOutputStream());
 				
 				idJugador = in.readInt();
 				System.out.println("Conectado: Jugador "+idJugador);
@@ -78,6 +74,22 @@ public class Cliente
 		jug.mostrar();
 		System.out.println("Jugador");
 		System.out.println("");
+	}
+	
+	public void leerJugador()
+	{
+		try
+		{
+			this.jug =(Jugador) cc.in.readObject();
+		}
+		catch (ClassNotFoundException e)
+		{
+			e.printStackTrace();
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	public void leerRival()
@@ -174,6 +186,15 @@ public class Cliente
 			c.leerRival();
 			c.mostrarPartida();
 			c.turno();
+			System.out.println("Aquí");
+			c.leerJugador();
+			System.out.println("Aquí2");
+			c.cc.out.writeInt(0);
+			c.cc.out.flush();
+			System.out.println("Aquí3");
+			c.leerRival();
+			System.out.println("Aquí4");
+			c.mostrarPartida();
 			while(true)
 			{
 				

@@ -173,6 +173,33 @@ public class Servidor
 					
 					calcularTurno(obtenerJugadorPorId(), cal);
 					acc++;
+					
+					while(acc != 0)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+					TimeUnit.SECONDS.sleep(1);
+					System.out.println("Aquí");
+					if(idJugador == 1)
+					{
+						out.writeObject(j1);
+					}
+					else
+					{
+						out.writeObject(j2);
+					}
+					System.out.println("Aquí2");
+					in.readInt();
+					System.out.println("Aquí3");
+					if(idJugador == 1)
+					{
+						out.writeObject(j2);
+					}
+					else
+					{
+						out.writeObject(j1);
+					}
+					System.out.println("Aquí4");
 				}
 			}
 			catch(Exception e)
@@ -212,9 +239,6 @@ public class Servidor
 		jugadores.add(j1);
 		jugadores.add(j2);
 		List<Campeon> campeones = new ArrayList<>();
-		jugadores.get(0).mostrar();
-		System.out.println("");
-		jugadores.get(1).mostrar();
 		for(Jugador j : jugadores)
 		{
 			for(Campeon c : j.getCampeones())
@@ -226,6 +250,14 @@ public class Servidor
 		{
 			if(c.getTurnosAtaque() <= 0)
 			{
+				if(c.getJugador().equals(j1))
+				{
+					c.setRival(j2);
+				}
+				else
+				{
+					c.setRival(j1);
+				}
 				c.accion();
 				c.setSubidaNivel(c.getSubidaNivel() - 1);
 				if(c.getSubidaNivel() == 0)
@@ -275,10 +307,12 @@ public class Servidor
 			TimeUnit.SECONDS.sleep(1);
 
 			serv.acciones();
+			serv.acc = 0;
+			System.out.println("AquíM");
 		}
 		catch(Exception e)
 		{
-			
+			e.printStackTrace();
 		}
 	}
 }

@@ -68,11 +68,13 @@ public class Cliente
 	public void mostrarPartida()
 	{
 		System.out.println("");
+		System.out.println("----------------------------");
 		System.out.println("Rival");
 		riv.mostrar();
 		System.out.println("");
 		jug.mostrar();
 		System.out.println("Jugador");
+		System.out.println("----------------------------");
 		System.out.println("");
 	}
 	
@@ -176,6 +178,22 @@ public class Cliente
 		cc.out.writeObject(cal);
 	}
 	
+	public boolean juegoAcabado()
+	{
+		List<Jugador> jugadores = new ArrayList<>();
+		jugadores.add(jug);
+		jugadores.add(riv);
+        for(Jugador j : jugadores)
+        {
+            if(j.getPc() <= 0)
+            {
+            	System.out.println("FINAL");
+                return true;
+            }
+        }
+        return false;
+    }
+	
 	public static void main(String[] args)
 	{
 		try
@@ -184,20 +202,15 @@ public class Cliente
 			c.conectarServidor();
 			c.elegirCampeon();
 			c.leerRival();
-			c.mostrarPartida();
-			c.turno();
-			System.out.println("Aquí");
-			c.leerJugador();
-			System.out.println("Aquí2");
-			c.cc.out.writeInt(0);
-			c.cc.out.flush();
-			System.out.println("Aquí3");
-			c.leerRival();
-			System.out.println("Aquí4");
-			c.mostrarPartida();
-			while(true)
+			
+			while(!c.juegoAcabado())
 			{
-				
+				c.mostrarPartida();
+				c.turno();
+				c.leerJugador();
+				c.cc.out.writeInt(0);
+				c.cc.out.flush();
+				c.leerRival();
 			}
 		}
 		 catch (Exception e)

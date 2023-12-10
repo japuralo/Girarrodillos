@@ -127,6 +127,29 @@ public class Servidor
 			}
 		}
 		
+		public void mandarPartida() throws Exception
+		{
+			if(idJugador == 1)
+			{
+				out.writeObject(j1);
+			}
+			else
+			{
+				out.writeObject(j2);
+			}
+			
+			in.readInt();
+			
+			if(idJugador == 1)
+			{
+				out.writeObject(j2);
+			}
+			else
+			{
+				out.writeObject(j1);
+			}
+		}
+		
 		@Override
 		public void run()
 		{
@@ -162,7 +185,6 @@ public class Servidor
 				while(!juegoAcabado())
 				{
 					turnoAcabado = 0;
-					//leerJugador();
 					cal = (Paquete) in.readObject();
 					turnoAcabado++;
 					while(turnoAcabado != 2)
@@ -179,27 +201,6 @@ public class Servidor
 						TimeUnit.SECONDS.sleep(1);
 					}
 					TimeUnit.SECONDS.sleep(1);
-					System.out.println("Aquí");
-					if(idJugador == 1)
-					{
-						out.writeObject(j1);
-					}
-					else
-					{
-						out.writeObject(j2);
-					}
-					System.out.println("Aquí2");
-					in.readInt();
-					System.out.println("Aquí3");
-					if(idJugador == 1)
-					{
-						out.writeObject(j2);
-					}
-					else
-					{
-						out.writeObject(j1);
-					}
-					System.out.println("Aquí4");
 				}
 			}
 			catch(Exception e)
@@ -207,7 +208,6 @@ public class Servidor
 				e.printStackTrace();
 			}
 		}
-		
 	}
 	
 	public void calcularTurno(Jugador j, Paquete cal)
@@ -232,7 +232,7 @@ public class Servidor
 		}
 	}
 	
-	public void acciones()
+	public void acciones() throws Exception
 	{
 		System.out.println("----------------------------");
 		List<Jugador> jugadores = new ArrayList<>();
@@ -275,9 +275,11 @@ public class Servidor
 		System.out.println("");
 		System.out.println("----------------------------");
 		System.out.println("");
+		cj1.mandarPartida();
+		cj2.mandarPartida();
 	}
 	
-	public boolean juegoAcabado()
+	public boolean juegoAcabado() throws Exception
 	{
 		List<Jugador> jugadores = new ArrayList<>();
 		jugadores.add(j1);
@@ -287,6 +289,17 @@ public class Servidor
             if(j.getPc() <= 0)
             {
             	System.out.println("FINAL");
+            	cj1.out.writeBytes("FINAL");
+            	cj2.out.writeBytes("FINAL");
+            	try
+            	{
+					cj1.socket.close();
+					cj2.socket.close();
+				}
+            	catch(Exception e)
+            	{
+					e.printStackTrace();
+				}
                 return true;
             }
         }
@@ -299,16 +312,23 @@ public class Servidor
 		{
 			Servidor serv = new Servidor();
 			serv.aceptarConexion();
-		
-			while(serv.acc != 2)
+			
+			while(serv.jugListos != 2)
 			{
 				TimeUnit.SECONDS.sleep(1);
 			}
-			TimeUnit.SECONDS.sleep(1);
+			
+			while(!serv.juegoAcabado())
+			{
+				while(serv.acc != 2)
+				{
+					TimeUnit.SECONDS.sleep(1);
+				}
+				TimeUnit.SECONDS.sleep(1);
 
-			serv.acciones();
-			serv.acc = 0;
-			System.out.println("AquíM");
+				serv.acciones();
+				serv.acc = 0;
+			}
 		}
 		catch(Exception e)
 		{

@@ -29,6 +29,7 @@ public class Cliente
 	private List<Campeon> lc;
 	private Jugador jug;
 	private Jugador riv;
+	private int fin = 0;
 	
 	public Cliente()
 	{
@@ -63,6 +64,12 @@ public class Cliente
 				e.printStackTrace();
 			}
 		}
+		
+		public boolean conexionAbierta()
+		{
+			if(this.socket.isClosed()) return false;
+			else return true;
+		}
 	}
 	
 	public void mostrarPartida()
@@ -78,11 +85,11 @@ public class Cliente
 		System.out.println("");
 	}
 	
-	public void leerJugador()
+	public Jugador leerJugador()
 	{
 		try
 		{
-			this.jug =(Jugador) cc.in.readObject();
+			return (Jugador) cc.in.readObject();
 		}
 		catch (ClassNotFoundException e)
 		{
@@ -92,22 +99,7 @@ public class Cliente
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	public void leerRival()
-	{
-		try
-		{
-			this.riv =(Jugador) cc.in.readObject();
-		}
-		catch (ClassNotFoundException e)
-		{
-			e.printStackTrace();
-		}
-		catch (IOException e)
-		{
-			e.printStackTrace();
-		}
+		return null;
 	}
 	
 	public void elegirCampeon() throws Exception
@@ -178,20 +170,17 @@ public class Cliente
 		cc.out.writeObject(cal);
 	}
 	
-	public boolean juegoAcabado()
+	public void juegoAcabado()
 	{
-		List<Jugador> jugadores = new ArrayList<>();
-		jugadores.add(jug);
-		jugadores.add(riv);
-        for(Jugador j : jugadores)
-        {
-            if(j.getPc() <= 0)
-            {
-            	System.out.println("FINAL");
-                return true;
-            }
-        }
-        return false;
+		try
+		{
+			this.fin = cc.in.readInt();
+		}
+		catch(IOException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
 	
 	public static void main(String[] args)
@@ -201,17 +190,22 @@ public class Cliente
 			Cliente c = new Cliente();
 			c.conectarServidor();
 			c.elegirCampeon();
-			c.leerRival();
+			c.riv = c.leerJugador();
 			
-			while(!c.juegoAcabado())
+			while(c.fin == 0)
 			{
 				c.mostrarPartida();
 				c.turno();
-				c.leerJugador();
+				c.cc.in.readInt();
+				c.jug = c.leerJugador();
 				c.cc.out.writeInt(0);
 				c.cc.out.flush();
-				c.leerRival();
+				c.riv = c.leerJugador();
+				c.cc.out.writeInt(0);
+				c.cc.out.flush();
+				c.juegoAcabado();
 			}
+			System.out.println("Ha ganado el Jugador "+c.fin);
 		}
 		 catch (Exception e)
 		{

@@ -27,6 +27,8 @@ public class Servidor
 	private int jugListos = 0;
 	private int turnoAcabado = 0;
 	private int acc = 0;
+	private int sigTurno = 0;
+	private int fin = 0;
 	
 	public Servidor()
 	{
@@ -182,7 +184,7 @@ public class Servidor
 				
 				mandarRival();
 
-				while(!juegoAcabado())
+				while(fin == 0)
 				{
 					turnoAcabado = 0;
 					cal = (Paquete) in.readObject();
@@ -193,6 +195,9 @@ public class Servidor
 					}
 					TimeUnit.SECONDS.sleep(1);
 					
+					out.writeInt(0);
+					out.flush();
+					
 					calcularTurno(obtenerJugadorPorId(), cal);
 					acc++;
 					
@@ -201,6 +206,17 @@ public class Servidor
 						TimeUnit.SECONDS.sleep(1);
 					}
 					TimeUnit.SECONDS.sleep(1);
+					
+					mandarPartida();
+					
+					while(sigTurno == 0)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+					
+					in.readInt();
+					out.writeInt(fin);
+					out.flush();
 				}
 			}
 			catch(Exception e)
@@ -275,11 +291,11 @@ public class Servidor
 		System.out.println("");
 		System.out.println("----------------------------");
 		System.out.println("");
-		cj1.mandarPartida();
-		cj2.mandarPartida();
+		j1 = jugadores.get(0);
+		j2 = jugadores.get(1);
 	}
 	
-	public boolean juegoAcabado() throws Exception
+	public void juegoAcabado() throws Exception
 	{
 		List<Jugador> jugadores = new ArrayList<>();
 		jugadores.add(j1);
@@ -289,21 +305,11 @@ public class Servidor
             if(j.getPc() <= 0)
             {
             	System.out.println("FINAL");
-            	cj1.out.writeBytes("FINAL");
-            	cj2.out.writeBytes("FINAL");
-            	try
-            	{
-					cj1.socket.close();
-					cj2.socket.close();
-				}
-            	catch(Exception e)
-            	{
-					e.printStackTrace();
-				}
-                return true;
+            	if(j.equals(j1)) this.fin = 2;
+            	else this.fin = 1;
             }
         }
-        return false;
+        this.sigTurno = 1;
     }
 	
 	public static void main(String[] args)
@@ -318,8 +324,9 @@ public class Servidor
 				TimeUnit.SECONDS.sleep(1);
 			}
 			
-			while(!serv.juegoAcabado())
+			while(serv.fin == 0)
 			{
+				serv.sigTurno = 0;
 				while(serv.acc != 2)
 				{
 					TimeUnit.SECONDS.sleep(1);
@@ -328,6 +335,8 @@ public class Servidor
 
 				serv.acciones();
 				serv.acc = 0;
+				serv.juegoAcabado();
+				TimeUnit.SECONDS.sleep(10);
 			}
 		}
 		catch(Exception e)

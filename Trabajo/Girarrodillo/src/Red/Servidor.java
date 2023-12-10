@@ -1,7 +1,5 @@
 package Red;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -13,22 +11,20 @@ import java.util.concurrent.*;
 
 import Campeones.Campeon;
 import Jugador.Jugador;
-import Jugador.Rodillos;
 
 public class Servidor
 {
 	private ServerSocket servidor;
-	private int numJugadores;
-	private ConexionServidor cj1;
-	private ConexionServidor cj2;
-	private int turnos;
-	private Jugador j1 = null;
-	private Jugador j2 = null;
-	private int jugListos = 0;
-	private int turnoAcabado = 0;
-	private int acc = 0;
-	private int sigTurno = 0;
-	private int fin = 0;
+	private int numJugadores;		//Número de jugadores conectados al servidor.
+	private Jugador j1 = null;		//Primer jugador en conectarse.
+	private Jugador j2 = null;		//Segundo jugador en conectarse.
+	private int jugListos = 0;		//Número de jugadores que han elegido Campeones.
+	private int turnoAcabado = 0;	//Número de jugadores que han acabado su turno.
+	private int acc = 0;			//Número de jugadores preparados para que se realicen acciones.
+	private int sigTurno = 0;		//Si es 1, puede empezar el siguiente turno.
+	private int fin = 0;			//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
+	private ConexionServidor cj1;	//Conexión con el primer jugador.
+	private ConexionServidor cj2;	//Conexión con el segundo jugador.
 	
 	public Servidor()
 	{
@@ -44,6 +40,8 @@ public class Servidor
 		}
 	}
 	
+	//Acepta conexiones de Clientes hasta que haya 2 conectados y no más.
+	//Comienza los hilos que gestionan a cada Cliente.
 	public void aceptarConexion()
 	{
 		System.out.println("Esperando conexiones.");
@@ -68,13 +66,14 @@ public class Servidor
 		}
 	}
 	
+	//Clase que gestiona la conexión del servidor con cada cliente mediante hilos.
 	private class ConexionServidor implements Runnable
 	{
 		private Socket socket;
 		private ObjectInputStream in;
 		private ObjectOutputStream out;
-		private int idJugador;
-		private Paquete cal;
+		private int idJugador;	//Id del Jugador Cliente.
+		private Paquete cal;	//Recibe información del cliente.
 		
 		public ConexionServidor(Socket s, int id)
 		{
@@ -91,6 +90,7 @@ public class Servidor
 			}
 		}
 		
+		//Manda el Jugador Rival al Cliente.
 		public void mandarRival() throws Exception
 		{
 			if(idJugador == 1)
@@ -103,20 +103,7 @@ public class Servidor
 			}
 		}
 		
-		public void leerJugador() throws Exception
-		{
-			Jugador aux = (Jugador) in.readObject();
-			aux.toString();
-			if(idJugador == 1)
-			{
-				j1 = aux;
-			}
-			else
-			{
-				j2 = aux;
-			}
-		}
-		
+		//Obtiene el Jugador al que corresponde el Id proporcionado.
 		public Jugador obtenerJugadorPorId()
 		{
 			if(idJugador == 1)
@@ -129,26 +116,31 @@ public class Servidor
 			}
 		}
 		
+		//Manda ambos Jugadores al Cliente.
 		public void mandarPartida() throws Exception
 		{
 			if(idJugador == 1)
 			{
-				out.writeObject(j1);
+				out.writeObject(new Paquete(j1.getPc(), j1.getPm(), j1.getCampeones().get(0).getTurnosAtaque(), j1.getCampeones().get(1).getTurnosAtaque()));
+				//out.writeObject(j1);
 			}
 			else
 			{
-				out.writeObject(j2);
+				out.writeObject(new Paquete(j2.getPc(), j2.getPm(), j2.getCampeones().get(0).getTurnosAtaque(), j2.getCampeones().get(1).getTurnosAtaque()));
+				//out.writeObject(j2);
 			}
 			
 			in.readInt();
 			
 			if(idJugador == 1)
 			{
-				out.writeObject(j2);
+				out.writeObject(new Paquete(j2.getPc(), j2.getPm(), j2.getCampeones().get(0).getTurnosAtaque(), j2.getCampeones().get(1).getTurnosAtaque()));
+				//out.writeObject(j2);
 			}
 			else
 			{
-				out.writeObject(j1);
+				out.writeObject(new Paquete(j1.getPc(), j1.getPm(), j1.getCampeones().get(0).getTurnosAtaque(), j1.getCampeones().get(1).getTurnosAtaque()));
+				//out.writeObject(j1);
 			}
 		}
 		
@@ -226,6 +218,7 @@ public class Servidor
 		}
 	}
 	
+	//Calcula los resultados del turno del Jugador j mediante los valores del Paquete cal.
 	public void calcularTurno(Jugador j, Paquete cal)
 	{
 		List<Campeon> cam = j.getCampeones();
@@ -248,6 +241,7 @@ public class Servidor
 		}
 	}
 	
+	//Gestiona las acciones a realizar por los Campeones.
 	public void acciones() throws Exception
 	{
 		System.out.println("----------------------------");
@@ -295,6 +289,7 @@ public class Servidor
 		j2 = jugadores.get(1);
 	}
 	
+	//Controla si ha acabado el juego y quién ha ganado de haberlo hecho.
 	public void juegoAcabado() throws Exception
 	{
 		List<Jugador> jugadores = new ArrayList<>();

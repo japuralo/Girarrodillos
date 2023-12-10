@@ -7,11 +7,13 @@ import java.util.List;
 public class Rodillos implements Serializable
 {
 	private static final long serialVersionUID = 1L;
+	//Rodillos individuales que componen el objeto Rodillos.
 	private Rodillo r1;
 	private Rodillo r2;
 	private Rodillo r3;
 	private Rodillo r4;
 	private Rodillo r5;
+	//Candado que des/bloquea un Rodillo.
 	private boolean candado1 = false;
 	private boolean candado2 = false;
 	private boolean candado3 = false;
@@ -152,6 +154,7 @@ public class Rodillos implements Serializable
 		this.candado5 = !this.candado5;
 	}
 	
+	//Hace girar los Rodillos.
 	public void girar()
 	{
 		if(!candado1) this.r1 = Rodillo.rodilloAleatorio();

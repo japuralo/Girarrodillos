@@ -7,13 +7,13 @@ import Jugador.Jugador;
 public abstract class Campeon implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-	public int danoCorona;
-	public int danoMuralla;
-	public int turnosAtaque;
-	public int tABase;
-	public Jugador jugador;
-	public Jugador rival;
-	private int subidaNivel = 2;
+	public int danoCorona;				//Daño básico a la Corona enemiga.
+	public int danoMuralla;				//Daño básico a la Muralla enemiga.
+	public int turnosAtaque;			//Energía necesaria para la siguiente acción.
+	public int tABase;					//Energía necesaria base para una acción.
+	public Jugador jugador;				//Jugador al que pertenece el campeón.
+	public Jugador rival;				//Jugador enemigo.
+	private int subidaNivel = 2;		//Experiencia necesaria para subir de nivel.
 	
 	public Campeon(Jugador jug, Jugador riv)
 	{
@@ -97,6 +97,7 @@ public abstract class Campeon implements Serializable
 		this.turnosAtaque = this.tABase;
 	}
 	
+	//Realiza la acción del Campeón.
 	public void accion()
 	{
 		if(this.rival.getPm() > 0 && !this.getNom().equals("ASE") && !this.getNom().equals("ASE+") && !this.getNom().equals("ASE++"))
@@ -112,5 +113,6 @@ public abstract class Campeon implements Serializable
 		}
 	}
 	
+	//Mejora las características al subir de nivel.
 	public abstract void mejorar();
 }

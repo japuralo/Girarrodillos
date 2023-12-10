@@ -4,10 +4,11 @@ import java.util.Random;
 
 public enum Rodillo
 {
-	I,II,III,D,DD,DDD,X,M,MM,MMM;
+	I,II,III,D,DD,DDD,X,M,MM,MMM;	//Posibles valores de un Rodillo.
 	
 	private static final Random azar = new Random();
 	
+	//El Rodillo toma un valor al azar de entre los disponibles.
 	public static Rodillo rodilloAleatorio()
 	{
 		Rodillo[] rodillos = values();

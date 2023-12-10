@@ -10,10 +10,10 @@ import Campeones.Campeon;
 public class Jugador implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-	private List<Campeon> campeones;
-	private Rodillos rodillos;
-	private int pc = 10;
-	private int pm = 0;
+	private List<Campeon> campeones; 	//Campeones del jugador.
+	private Rodillos rodillos;			//Rodillos del jugador.
+	private int pc = 10;				//Puntos de Corona (vida)
+	private int pm = 0;					//Puntos de Muralla (armadura)
 	
 	public Jugador(List<Campeon> cm)
 	{
@@ -61,11 +61,13 @@ public class Jugador implements Serializable
 		this.pm = pm;
 	}
 	
+	//Añade un campeón a la lista del Jugador.
 	public void aniadirCampeon(Campeon cm)
 	{
 		this.campeones.add(cm);
 	}
 
+	//Permite des/bloquear uno o varios rodillos.
 	public void bloquear()
 	{
 		Scanner in = new Scanner(System.in);
@@ -84,6 +86,7 @@ public class Jugador implements Serializable
 		}
 	}
 	
+	//Gira los rodillos.
 	public void girar()
 	{
 		Scanner in = new Scanner(System.in);
@@ -93,6 +96,7 @@ public class Jugador implements Serializable
 		rodillos.girar();
 	}
 	
+	//Desbloquea todos los Rodillos.
 	public void resetarCandados()
 	{
 		rodillos.setCandado1(false);
@@ -102,6 +106,7 @@ public class Jugador implements Serializable
 		rodillos.setCandado5(false);
 	}
 	
+	//Muestra toda la información del Jugador.
 	public void mostrar()
 	{
 		System.out.println("PC: "+this.pc+"   PM: "+this.pm);

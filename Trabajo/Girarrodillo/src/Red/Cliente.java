@@ -1,7 +1,5 @@
 package Red;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -22,14 +20,12 @@ import Jugador.Rodillos;
 
 public class Cliente
 {
-	private ConexionCliente cc;
-	private int idJugador;
-	private int idRival;
-	private int turnos;
-	private List<Campeon> lc;
-	private Jugador jug;
-	private Jugador riv;
-	private int fin = 0;
+	private ConexionCliente cc;	//Gestiona la conexión con el servidor.
+	private int idJugador;		//Id del Jugador Cliente.
+	private List<Campeon> lc;	//Lista de campeones.
+	private Jugador jug;		//Objeto Jugador del Cliente.
+	private Jugador riv;		//Objeto Jugador contrincante.
+	private int fin = 0;		//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
 	
 	public Cliente()
 	{
@@ -37,17 +33,21 @@ public class Cliente
 		this.jug = new Jugador(lc);
 	}
 
+	//Crea un objeto ConexionCliente y lo asigna a cc.
 	public void conectarServidor()
 	{
 		this.cc = new ConexionCliente();
 	}
 	
+	//Clase que gestiona la conexion con el servidor.
 	private class ConexionCliente
 	{
 		private Socket socket;
 		private ObjectInputStream in;
 		private ObjectOutputStream out;
+		private Paquete paq;
 		
+		//Crea la conexión con el servidor y obtiene los canales de comunicación.
 		public ConexionCliente()
 		{
 			try
@@ -64,14 +64,9 @@ public class Cliente
 				e.printStackTrace();
 			}
 		}
-		
-		public boolean conexionAbierta()
-		{
-			if(this.socket.isClosed()) return false;
-			else return true;
-		}
 	}
 	
+	//Muestra el estado de la partida.
 	public void mostrarPartida()
 	{
 		System.out.println("");
@@ -85,6 +80,7 @@ public class Cliente
 		System.out.println("");
 	}
 	
+	//Lee un Jugador que envíe el Servidor.
 	public Jugador leerJugador()
 	{
 		try
@@ -102,6 +98,7 @@ public class Cliente
 		return null;
 	}
 	
+	//Proceso de selección de Campeones, al acabar envía el objeto Jugador al servidor.
 	public void elegirCampeon() throws Exception
 	{
 		this.riv =(Jugador) cc.in.readObject();
@@ -133,6 +130,7 @@ public class Cliente
 		cc.out.writeObject(jug);
 	}
 	
+	//Gestiona las acciones del jugador durante el turno.
 	public void turno() throws Exception
 	{
 		jug.resetarCandados();
@@ -148,6 +146,7 @@ public class Cliente
 		calcularTurno(jug);
 	}
 	
+	//Calcula los puntos obtenidos por el jugador en el turno y manda el resultado al servidor.
 	public void calcularTurno(Jugador j) throws Exception
 	{
 		int[] calculo = new int[3];
@@ -170,6 +169,7 @@ public class Cliente
 		cc.out.writeObject(cal);
 	}
 	
+	//Controla si el juego ha finalizado y quién ha ganado.
 	public void juegoAcabado()
 	{
 		try
@@ -182,6 +182,14 @@ public class Cliente
 			e.printStackTrace();
 		}
     }
+	
+	public void actualizarJugador(Jugador j, Paquete p)
+	{
+		j.setPc(p.getPc());
+		j.setPm(p.getPm());
+		j.getCampeones().get(0).setTurnosAtaque(p.getTi());
+		j.getCampeones().get(1).setTurnosAtaque(p.getTd());
+	}
 	
 	public static void main(String[] args)
 	{
@@ -197,10 +205,14 @@ public class Cliente
 				c.mostrarPartida();
 				c.turno();
 				c.cc.in.readInt();
-				c.jug = c.leerJugador();
+				//c.jug = c.leerJugador();
+				c.cc.paq = (Paquete) c.cc.in.readObject();
+				c.actualizarJugador(c.jug, c.cc.paq);
 				c.cc.out.writeInt(0);
 				c.cc.out.flush();
-				c.riv = c.leerJugador();
+				//c.riv = c.leerJugador();
+				c.cc.paq = (Paquete) c.cc.in.readObject();
+				c.actualizarJugador(c.riv, c.cc.paq);
 				c.cc.out.writeInt(0);
 				c.cc.out.flush();
 				c.juegoAcabado();

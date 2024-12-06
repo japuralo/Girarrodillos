@@ -15,6 +15,7 @@ import Jugador.Jugador;
 public class Servidor
 {
 	private ServerSocket servidor;
+	private ConcurrentHashMap<Integer, Partida> partidas;
 	
 	public Servidor()
 	{
@@ -23,6 +24,7 @@ public class Servidor
 		try
 		{
 			this.servidor = new ServerSocket(9876);
+			this.partidas = new ConcurrentHashMap<>();
 		}
 		catch(IOException e)
 		{
@@ -46,6 +48,7 @@ public class Servidor
 				if(clientes.size() == 2)
 				{
 					Partida p = new Partida(new ArrayList<>(clientes));
+					registrarPartida(p);
 					pool.submit(p);
 					clientes.clear();
 				}
@@ -55,6 +58,17 @@ public class Servidor
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void registrarPartida(Partida p)
+	{
+		int i = 1;
+		boolean asignado = false;
+		while(partidas.containsKey(i))
+		{
+			i++;
+		}
+		this.partidas.put(i, p);
 	}
 	
 	public static void main(String[] args)

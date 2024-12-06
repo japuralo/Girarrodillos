@@ -25,10 +25,16 @@ public class Partida extends Thread
 	private ConexionServidor cj2;	//Conexión con el segundo jugador.
 	
 	private List<Socket> sockets;	//Lista de sockets de los jugadores.
+	private int id;					//Número de identificación de la partida.
 	
 	public Partida(List<Socket> ls)
 	{
 		this.sockets = ls;
+	}
+	
+	public void setId(int i)
+	{
+		this.id = i;
 	}
 	
 	//Acepta conexiones de Clientes hasta que haya 2 conectados y no más.
@@ -289,6 +295,22 @@ public class Partida extends Thread
         }
         this.sigTurno = 1;
     }
+	
+	public void mostrarPartida()
+	{
+		if(j1 != null && j2 != null)
+		{
+			System.out.println(this.id + ".");
+			System.out.println("----------------------------");
+			System.out.println("Jugador 1");
+			j1.mostrar();
+			System.out.println("");
+			j2.mostrar();
+			System.out.println("Jugador 2");
+			System.out.println("----------------------------");
+			System.out.println("");
+		}
+	}
 	
 	@Override
 	public void run()

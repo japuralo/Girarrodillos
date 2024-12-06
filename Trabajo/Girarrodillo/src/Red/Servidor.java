@@ -7,6 +7,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.*;
 
 import Campeones.Campeon;
@@ -48,10 +50,12 @@ public class Servidor
 				if(clientes.size() == 2)
 				{
 					Partida p = new Partida(new ArrayList<>(clientes));
-					registrarPartida(p);
+					int id = registrarPartida(p);
+					p.setId(id);
 					pool.submit(p);
 					clientes.clear();
 				}
+				mostrarPartidas();
 			}
 		}
 		catch(IOException e)
@@ -60,7 +64,7 @@ public class Servidor
 		}
 	}
 	
-	public void registrarPartida(Partida p)
+	public int registrarPartida(Partida p)
 	{
 		int i = 1;
 		boolean asignado = false;
@@ -69,6 +73,16 @@ public class Servidor
 			i++;
 		}
 		this.partidas.put(i, p);
+		
+		return i;
+	}
+	
+	public void mostrarPartidas()
+	{
+		for(Entry<Integer, Partida> p : partidas.entrySet())
+		{
+			p.getValue().mostrarPartida();
+		}
 	}
 	
 	public static void main(String[] args)

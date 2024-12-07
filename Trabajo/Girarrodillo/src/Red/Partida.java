@@ -13,14 +13,14 @@ import Jugador.Jugador;
 
 public class Partida extends Thread
 {
-	private int numJugadores;		//Número de jugadores conectados al servidor.
-	private Jugador j1 = null;		//Primer jugador en conectarse.
-	private Jugador j2 = null;		//Segundo jugador en conectarse.
-	private int jugListos = 0;		//Número de jugadores que han elegido Campeones.
-	private int turnoAcabado = 0;	//Número de jugadores que han acabado su turno.
-	private int acc = 0;			//Número de jugadores preparados para que se realicen acciones.
-	private int sigTurno = 0;		//Si es 1, puede empezar el siguiente turno.
-	private int fin = 0;			//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
+	public int numJugadores;		//Número de jugadores conectados al servidor.
+	public Jugador j1 = null;		//Primer jugador en conectarse.
+	public Jugador j2 = null;		//Segundo jugador en conectarse.
+	public int jugListos = 0;		//Número de jugadores que han elegido Campeones.
+	public int turnoAcabado = 0;	//Número de jugadores que han acabado su turno.
+	public int acc = 0;			//Número de jugadores preparados para que se realicen acciones.
+	public int sigTurno = 0;		//Si es 1, puede empezar el siguiente turno.
+	public int fin = 0;			//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
 	private ConexionServidor cj1;	//Conexión con el primer jugador.
 	private ConexionServidor cj2;	//Conexión con el segundo jugador.
 	
@@ -47,163 +47,12 @@ public class Partida extends Thread
 			Socket cli = this.sockets.get(numJugadores);
 			this.numJugadores++;
 			//System.out.println("Jugadores conectados: "+this.numJugadores);
-			ConexionServidor cs = new ConexionServidor(cli, numJugadores);
+			ConexionServidor cs = new ConexionServidor(this, cli, numJugadores);
 			if(numJugadores == 1) this.cj1 = cs;
 			else this.cj2 = cs;
 			
 			Thread t = new Thread(cs);
 			t.start();
-		}
-	}
-	
-	//Clase que gestiona la conexión del servidor con cada cliente mediante hilos.
-	private class ConexionServidor implements Runnable
-	{
-		private Socket socket;
-		private ObjectInputStream in;
-		private ObjectOutputStream out;
-		private int idJugador;	//Id del Jugador Cliente.
-		private Paquete cal;	//Recibe información del cliente.
-			
-		public ConexionServidor(Socket s, int id)
-		{
-			this.socket = s;
-			this.idJugador = id;
-			try
-			{		
-				this.in = new ObjectInputStream(socket.getInputStream());
-				this.out = new ObjectOutputStream(socket.getOutputStream());
-			}
-			catch(IOException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		
-		//Manda el Jugador Rival al Cliente.
-		public void mandarRival() throws Exception
-		{
-			if(idJugador == 1)
-			{
-				out.writeObject(j2);
-			}
-			else
-			{
-				out.writeObject(j1);
-			}
-		}
-			
-		//Obtiene el Jugador al que corresponde el Id proporcionado.
-		public Jugador obtenerJugadorPorId()
-		{
-			if(idJugador == 1)
-			{
-				return j1;
-			}
-			else
-			{
-				return j2;
-			}
-		}
-			
-		//Manda ambos Jugadores al Cliente.
-		public void mandarPartida() throws Exception
-		{
-			if(idJugador == 1)
-			{
-				out.writeObject(new Paquete(j1.getPc(), j1.getPm(), j1.getCampeones().get(0).getTurnosAtaque(), j1.getCampeones().get(1).getTurnosAtaque()));
-				//out.writeObject(j1);
-			}
-			else
-			{
-				out.writeObject(new Paquete(j2.getPc(), j2.getPm(), j2.getCampeones().get(0).getTurnosAtaque(), j2.getCampeones().get(1).getTurnosAtaque()));
-				//out.writeObject(j2);
-			}
-				
-			in.readInt();
-			
-			if(idJugador == 1)
-			{
-				out.writeObject(new Paquete(j2.getPc(), j2.getPm(), j2.getCampeones().get(0).getTurnosAtaque(), j2.getCampeones().get(1).getTurnosAtaque()));
-				//out.writeObject(j2);
-			}
-			else
-			{
-				out.writeObject(new Paquete(j1.getPc(), j1.getPm(), j1.getCampeones().get(0).getTurnosAtaque(), j1.getCampeones().get(1).getTurnosAtaque()));
-				//out.writeObject(j1);
-			}
-		}
-			
-		@Override
-		public void run()
-		{
-			try
-			{
-				out.writeInt(idJugador);
-				out.flush();
-				while(numJugadores != 2)
-				{
-					TimeUnit.SECONDS.sleep(1);
-				}
-				
-				if(idJugador == 1)
-				{
-					out.writeObject(j2);
-					j1 = (Jugador) in.readObject();
-					jugListos++;
-				}
-				else
-				{
-					out.writeObject(j1);
-					j2 = (Jugador) in.readObject();
-					jugListos++;
-				}
-				
-				while(jugListos != 2)
-				{
-					TimeUnit.SECONDS.sleep(1);
-				}
-				
-				mandarRival();
-				while(fin == 0)
-				{
-					turnoAcabado = 0;
-					cal = (Paquete) in.readObject();
-					turnoAcabado++;
-					while(turnoAcabado != 2)
-					{
-						TimeUnit.SECONDS.sleep(1);
-					}
-					TimeUnit.SECONDS.sleep(1);
-						
-					out.writeInt(0);
-					out.flush();
-					
-					calcularTurno(obtenerJugadorPorId(), cal);
-					acc++;
-						
-					while(acc != 0)
-					{
-						TimeUnit.SECONDS.sleep(1);
-					}
-					TimeUnit.SECONDS.sleep(1);
-					
-					mandarPartida();
-						
-					while(sigTurno == 0)
-					{
-						TimeUnit.SECONDS.sleep(1);
-					}
-						
-					in.readInt();
-					out.writeInt(fin);
-					out.flush();
-				}
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
 		}
 	}
 	

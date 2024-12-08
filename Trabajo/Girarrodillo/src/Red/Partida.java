@@ -3,6 +3,7 @@ package Red;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,15 +22,15 @@ public class Partida extends Thread
 	public int acc = 0;			//Número de jugadores preparados para que se realicen acciones.
 	public int sigTurno = 0;		//Si es 1, puede empezar el siguiente turno.
 	public int fin = 0;			//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
-	private ConexionServidor cj1;	//Conexión con el primer jugador.
-	private ConexionServidor cj2;	//Conexión con el segundo jugador.
+	public ConexionServidor cj1;	//Conexión con el primer jugador.
+	public ConexionServidor cj2;	//Conexión con el segundo jugador.
 	
-	private List<Socket> sockets;	//Lista de sockets de los jugadores.
+	private List<ConexionServidor> clientes;	//Lista de sockets de los jugadores.
 	private int id;					//Número de identificación de la partida.
-	
-	public Partida(List<Socket> ls)
+			
+	public Partida(List<ConexionServidor> ls)
 	{
-		this.sockets = ls;
+		this.clientes = ls;
 	}
 	
 	public void setId(int i)
@@ -44,15 +45,17 @@ public class Partida extends Thread
 		this.numJugadores = 0;
 		while(this.numJugadores < 2)
 		{
-			Socket cli = this.sockets.get(numJugadores);
+			ConexionServidor cs = this.clientes.get(numJugadores);
 			this.numJugadores++;
-			//System.out.println("Jugadores conectados: "+this.numJugadores);
-			ConexionServidor cs = new ConexionServidor(this, cli, numJugadores);
-			if(numJugadores == 1) this.cj1 = cs;
-			else this.cj2 = cs;
+
+			cs.setPartida(this);
+			cs.setIdJugador(numJugadores);
 			
-			Thread t = new Thread(cs);
-			t.start();
+			if(numJugadores == 1)
+			{
+				this.cj1 = cs;
+			}
+			else this.cj2 = cs;
 		}
 	}
 	
@@ -145,6 +148,7 @@ public class Partida extends Thread
         this.sigTurno = 1;
     }
 	
+	//Muestra la partida actual
 	public void mostrarPartida()
 	{
 		if(j1 != null && j2 != null)
@@ -159,6 +163,18 @@ public class Partida extends Thread
 			System.out.println("----------------------------");
 			System.out.println("");
 		}
+	}
+	
+	//Devuelve un string con la información actual de la partida.
+	public String toString()
+	{
+		String s = "";
+		if(j1 != null && j2 != null)
+		{
+			s = s +"J1- " + "PC: " + j1.pc + " PM: " + j1.pm + " " + j1.campeones.get(0).toString()+ " " + j1.campeones.get(1).toString();
+			s = s + "   J2- " + "PC: " + j2.pc + " PM: " + j2.pm + " " + j2.campeones.get(0).toString()+ " " + j2.campeones.get(1).toString();
+		}
+		return s;
 	}
 	
 	@Override

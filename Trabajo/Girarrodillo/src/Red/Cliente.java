@@ -4,9 +4,14 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import Campeones.Arquero;
 import Campeones.Asesino;
@@ -26,6 +31,8 @@ public class Cliente
 	private Jugador jug;		//Objeto Jugador del Cliente.
 	private Jugador riv;		//Objeto Jugador contrincante.
 	private int fin = 0;		//Mientras sea 0, sigue la partida, si cambia a 1/2 es que ese jugador ha ganado.
+	
+	private boolean jugador;	//Marca si el cliente es jugador o espectador.
 	
 	public Cliente()
 	{
@@ -56,8 +63,8 @@ public class Cliente
 				this.out = new ObjectOutputStream(socket.getOutputStream());
 				this.in = new ObjectInputStream(socket.getInputStream());
 				
-				idJugador = in.readInt();
-				System.out.println("Conectado: Jugador "+idJugador);
+				//idJugador = in.readInt();
+				//System.out.println("Conectado: Jugador "+idJugador);
 			}
 			catch (IOException e)
 			{
@@ -85,7 +92,12 @@ public class Cliente
 	{
 		try
 		{
-			return (Jugador) cc.in.readObject();
+			Jugador j = null;
+			while(j == null)
+			{
+				j = (Jugador) cc.in.readObject();
+			}
+			return j;
 		}
 		catch (ClassNotFoundException e)
 		{
@@ -183,6 +195,7 @@ public class Cliente
 		}
     }
 	
+	//Actualiza los atributos de un Jugador con los datos recibidos en el Paquete.
 	public void actualizarJugador(Jugador j, Paquete p)
 	{
 		j.setPc(p.getPc());
@@ -197,27 +210,88 @@ public class Cliente
 		{
 			Cliente c = new Cliente();
 			c.conectarServidor();
-			c.elegirCampeon();
-			c.riv = c.leerJugador();
-			
-			while(c.fin == 0)
+			List<Integer> partidas = new ArrayList<Integer>();
+			String aux = "";
+			System.out.println("Partidas en curso/finalizadas:");
+			while(!(aux = c.cc.in.readLine()).equals("FIN"))
 			{
-				c.mostrarPartida();
-				c.turno();
-				c.cc.in.readInt();
-				//c.jug = c.leerJugador();
-				c.cc.paq = (Paquete) c.cc.in.readObject();
-				c.actualizarJugador(c.jug, c.cc.paq);
-				c.cc.out.writeInt(0);
-				c.cc.out.flush();
-				//c.riv = c.leerJugador();
-				c.cc.paq = (Paquete) c.cc.in.readObject();
-				c.actualizarJugador(c.riv, c.cc.paq);
-				c.cc.out.writeInt(0);
-				c.cc.out.flush();
-				c.juegoAcabado();
+				System.out.println(aux);
+				int a = Integer.parseInt(aux.substring(0, 1));
+				partidas.add(a);
 			}
-			System.out.println("Ha ganado el Jugador "+c.fin);
+			
+			Scanner sc = new Scanner(System.in);
+			System.out.println("Introduce el número de una partida para espectarla");
+			System.out.println("Introduce 0 para unirte a una partida nueva");
+			int op = -1;
+			boolean seguir = false;
+			while(!seguir)
+			{
+				try
+				{
+					op = sc.nextInt();
+					if(op == 0)
+					{
+						System.out.println("Buscando nueva partida");
+						seguir = true;
+						c.jugador = true;
+					}
+					else if(partidas.contains(op))
+					{
+						System.out.println("Espectando partida");
+						seguir = true;
+						c.jugador = false;
+					}
+					else
+					{
+						System.out.println("Opción no válida");
+					}
+				}
+				catch(InputMismatchException ex)
+				{
+					System.out.println("Opción no válida");
+				}
+			}
+			c.cc.out.writeInt(op);
+			c.cc.out.flush();
+			
+			if(c.jugador)
+			{
+				c.idJugador = c.cc.in.readInt();
+				System.out.println("Conectado: Jugador "+c.idJugador);
+				
+				c.elegirCampeon();
+				c.riv = c.leerJugador();
+				
+				while(c.fin == 0)
+				{
+					c.mostrarPartida();
+					c.turno();
+					c.cc.in.readInt();
+					//c.jug = c.leerJugador();
+					c.cc.paq = (Paquete) c.cc.in.readObject();
+					c.actualizarJugador(c.jug, c.cc.paq);
+					c.cc.out.writeInt(0);
+					c.cc.out.flush();
+					//c.riv = c.leerJugador();
+					c.cc.paq = (Paquete) c.cc.in.readObject();
+					c.actualizarJugador(c.riv, c.cc.paq);
+					c.cc.out.writeInt(0);
+					c.cc.out.flush();
+					c.juegoAcabado();
+				}
+				System.out.println("Ha ganado el Jugador "+c.fin);
+			}
+			else
+			{
+				String s = "";
+				while(!(s = c.cc.in.readLine()).equals("FIN"))
+				{
+					System.out.println(s);
+				}
+				s = c.cc.in.readLine();
+				System.out.println(s);
+			}
 		}
 		 catch (Exception e)
 		{

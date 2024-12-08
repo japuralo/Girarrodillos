@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -17,7 +18,7 @@ import Jugador.Jugador;
 public class Servidor
 {
 	private ServerSocket servidor;
-	private ConcurrentHashMap<Integer, Partida> partidas;
+	public ConcurrentHashMap<Integer, Partida> partidas;	//Guarda las partidas que se están jugando / han jugado.
 	
 	public Servidor()
 	{
@@ -41,21 +42,12 @@ public class Servidor
 		System.out.println("Esperando conexiones.");
 		try
 		{
-			List<Socket> clientes = new ArrayList<>();
 			while(true)
 			{
 				Socket cli = servidor.accept();
-				clientes.add(cli);
-				
-				if(clientes.size() == 2)
-				{
-					Partida p = new Partida(new ArrayList<>(clientes));
-					int id = registrarPartida(p);
-					p.setId(id);
-					pool.submit(p);
-					clientes.clear();
-				}
-				mostrarPartidas();
+				ConexionServidor cs = new ConexionServidor(cli);
+				cs.setServidor(this);
+				pool.submit(cs);
 			}
 		}
 		catch(IOException e)
@@ -64,6 +56,7 @@ public class Servidor
 		}
 	}
 	
+	//Registra una partida nueva con un número de identificación.
 	public int registrarPartida(Partida p)
 	{
 		int i = 1;
@@ -77,6 +70,7 @@ public class Servidor
 		return i;
 	}
 	
+	//Muestra las partidas almacenadas.
 	public void mostrarPartidas()
 	{
 		for(Entry<Integer, Partida> p : partidas.entrySet())
@@ -91,6 +85,8 @@ public class Servidor
 		try
 		{
 			Servidor serv = new Servidor();
+			SalaEspera se = new SalaEspera(pool, serv);
+			pool.submit(se);
 			serv.aceptarConexion(pool);
 		}
 		catch(Exception e)

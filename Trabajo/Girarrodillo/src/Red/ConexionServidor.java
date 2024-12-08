@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.time.Instant;
+import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import Jugador.Jugador;
@@ -16,13 +18,14 @@ public class ConexionServidor implements Runnable
 	private int idJugador;	//Id del Jugador Cliente.
 	private Paquete cal;	//Recibe información del cliente.
 	
-	private Partida par;
+	private Partida par;	//Partida que está jugando/espectando el cliente asociado.
+	private Servidor serv;	
 	
-	public ConexionServidor(Partida p, Socket s, int id)
+	private boolean jugador;	//Marca si la conexión pertenece a un jugador o a un espectador.
+	
+	public ConexionServidor(Socket s)
 	{
-		this.par = p;
 		this.socket = s;
-		this.idJugador = id;
 		try
 		{		
 			this.in = new ObjectInputStream(socket.getInputStream());
@@ -32,6 +35,21 @@ public class ConexionServidor implements Runnable
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void setPartida(Partida p)
+	{
+		this.par = p;
+	}
+	
+	public void setIdJugador(int id)
+	{
+		this.idJugador = id;
+	}
+	
+	public void setServidor(Servidor s)
+	{
+		this.serv = s;
 	}
 	
 	//Manda el Jugador Rival al Cliente.
@@ -93,66 +111,131 @@ public class ConexionServidor implements Runnable
 	{
 		try
 		{
-			out.writeInt(idJugador);
-			out.flush();
-			while(par.numJugadores != 2)
+			for(Entry<Integer, Partida> p : serv.partidas.entrySet())
 			{
-				TimeUnit.SECONDS.sleep(1);
+				if(p.getValue().toString() != null && !p.getValue().toString().equals(""))
+				{
+					out.writeBytes(p.getKey() + ". " + p.getValue().toString() + "\n");
+					out.flush();
+				}
 			}
+			out.writeBytes("FIN\n");
+			out.flush();
 			
-			if(idJugador == 1)
+			System.out.println("Esperando opción");
+			int op = in.readInt();
+			if(op == 0)
 			{
-				out.writeObject(par.j2);
-				par.j1 = (Jugador) in.readObject();
-				par.jugListos++;
+				SalaEspera.addCliente(this);
+				this.jugador = true;
 			}
 			else
 			{
-				out.writeObject(par.j1);
-				par.j2 = (Jugador) in.readObject();
-				par.jugListos++;
+				this.jugador = false;
 			}
 			
-			while(par.jugListos != 2)
+			if(jugador)
 			{
-				TimeUnit.SECONDS.sleep(1);
+				while(par == null)
+				{
+					TimeUnit.MILLISECONDS.sleep(100);
+				}
+				
+				out.writeInt(idJugador);
+				out.flush();
+				
+				mandarRival();
+				
+				while(par.numJugadores != 2)
+				{
+					TimeUnit.SECONDS.sleep(1);
+				}
+				
+				if(idJugador == 1)
+				{
+					out.writeObject(par.j2);
+					par.j1 = (Jugador) in.readObject();
+					par.jugListos++;
+				}
+				else
+				{
+					out.writeObject(par.j1);
+					par.j2 = (Jugador) in.readObject();
+					par.jugListos++;
+				}
+				
+				while(par.jugListos != 2)
+				{
+					TimeUnit.SECONDS.sleep(1);
+				}
+				
+				mandarRival();
+				while(par.fin == 0)
+				{
+					par.turnoAcabado = 0;
+					cal = (Paquete) in.readObject();
+					par.turnoAcabado++;
+					while(par.turnoAcabado != 2)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+					TimeUnit.SECONDS.sleep(1);
+						
+					out.writeInt(0);
+					out.flush();
+					
+					par.calcularTurno(obtenerJugadorPorId(), cal);
+					par.acc++;
+						
+					while(par.acc != 0)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+					TimeUnit.SECONDS.sleep(1);
+					
+					mandarPartida();
+						
+					while(par.sigTurno == 0)
+					{
+						TimeUnit.SECONDS.sleep(1);
+					}
+						
+					in.readInt();
+					out.writeInt(par.fin);
+					out.flush();
+				}
+			}
+			else
+			{
+				this.idJugador = 3;
+				this.par = serv.partidas.get(op);
+				String s = par.toString();
+				while(par.fin == 0)
+				{
+					if(!s.equals(par.toString()))
+					{
+						TimeUnit.SECONDS.sleep(2);
+						out.writeBytes(par.toString() + "\n");
+						out.flush();
+						s = par.toString();
+					}
+				}
+				out.writeBytes(par.toString() + "\n");
+				out.flush();
+				out.writeBytes("FIN" + "\n");
+				out.flush();
+				if(par.fin == 1)
+				{
+					out.writeBytes("Ha ganado el Jugador 1\n");
+					out.flush();
+				}
+				else
+				{
+					out.writeBytes("Ha ganado el Jugador 2\n");
+					out.flush();
+				}
 			}
 			
-			mandarRival();
-			while(par.fin == 0)
-			{
-				par.turnoAcabado = 0;
-				cal = (Paquete) in.readObject();
-				par.turnoAcabado++;
-				while(par.turnoAcabado != 2)
-				{
-					TimeUnit.SECONDS.sleep(1);
-				}
-				TimeUnit.SECONDS.sleep(1);
-					
-				out.writeInt(0);
-				out.flush();
-				
-				par.calcularTurno(obtenerJugadorPorId(), cal);
-				par.acc++;
-					
-				while(par.acc != 0)
-				{
-					TimeUnit.SECONDS.sleep(1);
-				}
-				TimeUnit.SECONDS.sleep(1);
-				
-				mandarPartida();
-					
-				while(par.sigTurno == 0)
-				{
-					TimeUnit.SECONDS.sleep(1);
-				}
-					
-				in.readInt();
-				out.writeInt(par.fin);
-				out.flush();
-			}
 		}
 		catch(Exception e)
 		{

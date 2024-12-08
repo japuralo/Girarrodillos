@@ -10,10 +10,10 @@ import Campeones.Campeon;
 public class Jugador implements Serializable
 {
 	private static final long serialVersionUID = 1L;
-	private List<Campeon> campeones; 	//Campeones del jugador.
+	public List<Campeon> campeones; 	//Campeones del jugador.
 	private Rodillos rodillos;			//Rodillos del jugador.
-	private int pc = 10;				//Puntos de Corona (vida)
-	private int pm = 0;					//Puntos de Muralla (armadura)
+	public int pc = 10;				//Puntos de Corona (vida)
+	public int pm = 0;					//Puntos de Muralla (armadura)
 	
 	public Jugador(List<Campeon> cm)
 	{
